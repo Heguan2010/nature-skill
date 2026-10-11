@@ -76,6 +76,10 @@ class StarHistoryUnavailable(RuntimeError):
     """Raised when the API response cannot support a trustworthy chart."""
 
 
+class StarHistoryAuthRequired(StarHistoryUnavailable):
+    """Raised when no GitHub token is available; a configuration error, not a data problem."""
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -151,7 +155,7 @@ def github_graphql(
 ) -> dict:
     """Execute an authenticated GitHub GraphQL query with bounded retries."""
     if not token:
-        raise StarHistoryUnavailable(
+        raise StarHistoryAuthRequired(
             "GitHub GraphQL stargazer pagination requires GITHUB_TOKEN, GH_TOKEN, "
             "or an authenticated gh CLI."
         )
@@ -748,9 +752,11 @@ def main() -> int:
         daily = update_daily_incrementally(args.repo, args.token, args.retries, daily)
 
     if daily is None:
-        total_stars, items = fetch_stargazers(args.repo, args.token, args.workers, args.retries)
         try:
+            total_stars, items = fetch_stargazers(args.repo, args.token, args.workers, args.retries)
             points = build_daily_points(items, total_stars)
+        except StarHistoryAuthRequired:
+            raise  # a missing token is a configuration error and must fail the job
         except StarHistoryUnavailable as exc:
             print(f"Warning: {exc}", file=sys.stderr)
             return 0

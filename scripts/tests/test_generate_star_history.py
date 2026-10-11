@@ -266,6 +266,24 @@ class StarHistoryRenderingTests(unittest.TestCase):
         self.assertIn(">Current Star Count</text>", svg)
         self.assertNotIn(">100 stars</text>", svg)
 
+class MainUnavailableTests(unittest.TestCase):
+    def run_main(self, error: Exception) -> int:
+        argv = ["generate-star-history.py", "--repo", "owner/name", "--token", "tok", "--cache", ""]
+        with mock.patch("sys.argv", argv), mock.patch.object(MODULE, "fetch_stargazers", side_effect=error):
+            return MODULE.main()
+
+    def test_stargazer_count_mismatch_leaves_the_chart_unchanged_and_exits_zero(self) -> None:
+        error = MODULE.StarHistoryUnavailable(
+            "GitHub reported 500 stars but returned 3 stargazer timestamps; leaving the existing chart unchanged."
+        )
+        with mock.patch("sys.stderr"):
+            self.assertEqual(0, self.run_main(error))
+
+    def test_missing_token_still_fails(self) -> None:
+        with self.assertRaises(MODULE.StarHistoryUnavailable):
+            self.run_main(MODULE.StarHistoryAuthRequired("requires GITHUB_TOKEN"))
+
+
 
 if __name__ == "__main__":
     unittest.main()
