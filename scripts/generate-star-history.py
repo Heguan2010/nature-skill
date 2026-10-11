@@ -727,8 +727,11 @@ def update_readme_cache_buster(
     with path.open("r", encoding="utf-8", newline="") as handle:
         original = handle.read()
     output_path = pathlib.PurePosixPath(output_ref)
+    # PurePosixPath("star-history.svg").parent is ".", which must not become a literal "./" prefix.
+    directory = "" if output_path.parent.as_posix() == "." else f"{output_path.parent.as_posix()}/"
+    boundary = "" if directory else r"(?<![\w./-])"  # do not match inside other-star-history.svg
     versioned_pattern = (
-        rf"{re.escape(output_path.parent.as_posix())}/"
+        rf"{boundary}{re.escape(directory)}"
         rf"{re.escape(output_path.stem)}(?:-\d{{8}}T\d{{6}}Z)?"
         rf"{re.escape(output_path.suffix)}(?:\?v=[A-Za-z0-9._-]+)?"
     )

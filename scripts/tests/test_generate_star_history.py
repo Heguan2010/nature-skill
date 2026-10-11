@@ -283,6 +283,34 @@ class MainUnavailableTests(unittest.TestCase):
         with self.assertRaises(MODULE.StarHistoryUnavailable):
             self.run_main(MODULE.StarHistoryAuthRequired("requires GITHUB_TOKEN"))
 
+class ReadmeCacheBusterTests(unittest.TestCase):
+    def update(self, readme_text: str, output_ref: str, versioned_ref: str) -> str:
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "README.md"
+            path.write_text(readme_text, encoding="utf-8")
+            with mock.patch("builtins.print"):
+                MODULE.update_readme_cache_buster(path, output_ref, versioned_ref)
+            return path.read_text(encoding="utf-8")
+
+    def test_nested_output_path_is_replaced(self) -> None:
+        out = self.update("![c](assets/star-history.svg)", "assets/star-history.svg", "assets/star-history-20260101T000000Z.svg")
+        self.assertEqual("![c](assets/star-history-20260101T000000Z.svg)", out)
+
+    def test_top_level_output_path_is_replaced(self) -> None:
+        out = self.update("![c](star-history.svg)", "star-history.svg", "star-history-20260101T000000Z.svg")
+        self.assertEqual("![c](star-history-20260101T000000Z.svg)", out)
+
+    def test_top_level_pattern_does_not_touch_a_longer_filename(self) -> None:
+        text = "![a](other-star-history.svg) ![c](star-history.svg)"
+        out = self.update(text, "star-history.svg", "star-history-20260101T000000Z.svg")
+        self.assertEqual("![a](other-star-history.svg) ![c](star-history-20260101T000000Z.svg)", out)
+
+    def test_previously_versioned_reference_is_replaced(self) -> None:
+        out = self.update("![c](star-history-20250101T000000Z.svg?v=1)", "star-history.svg", "star-history-20260101T000000Z.svg")
+        self.assertEqual("![c](star-history-20260101T000000Z.svg)", out)
+
 
 
 if __name__ == "__main__":
