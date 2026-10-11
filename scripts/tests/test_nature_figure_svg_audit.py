@@ -59,6 +59,28 @@ class SvgSchematicAuditTests(unittest.TestCase):
     def test_off_canvas_text_fails(self) -> None:
         self.assertEqual(self.run_audit(svg('<text x="400" y="20">gone</text>')).returncode, 1)
 
+    def test_tspan_with_own_small_size_fails(self) -> None:
+        data = svg('<text x="10" y="20" style="font-size:6pt">Hi<tspan style="font-size:2pt">x</tspan></text>')
+        result = self.run_audit(data)
+        self.assertEqual(result.returncode, 1, result.stdout)
+        self.assertIn("text.small", result.stdout)
+
+    def test_size_set_only_on_tspan_is_not_reported_as_missing(self) -> None:
+        data = svg('<text x="10" y="20"><tspan style="font-size:6pt">Hi</tspan></text>')
+        result = self.run_audit(data)
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertNotIn("text.size", result.stdout)
+
+    def test_translate_moves_text_off_canvas(self) -> None:
+        data = svg('<g transform="translate(300,0)"><text x="10" y="10" style="font-size:6pt">A</text></g>')
+        result = self.run_audit(data)
+        self.assertEqual(result.returncode, 1, result.stdout)
+        self.assertIn("text.off-canvas", result.stdout)
+
+    def test_translate_that_stays_on_canvas_passes(self) -> None:
+        data = svg('<g transform="translate(100,50)"><text x="10" y="10" style="font-size:6pt">A</text></g>')
+        self.assertEqual(self.run_audit(data).returncode, 0)
+
     def test_non_svg_and_doctype_are_not_auditable(self) -> None:
         self.assertEqual(self.run_audit(b"just text").returncode, 2)
         bomb = b'<!DOCTYPE svg [<!ENTITY a "x">]><svg xmlns="http://www.w3.org/2000/svg"><text>&a;</text></svg>'
