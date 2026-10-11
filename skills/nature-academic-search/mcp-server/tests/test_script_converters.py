@@ -40,3 +40,14 @@ def test_ris_escape_keeps_comparison_operators():
 def test_ris_escape_still_strips_markup():
     assert converters.ris_escape("Role of <i>E. coli</i> in <b>disease</b>") == "Role of E. coli in disease"
     assert converters.ris_escape("line<br/>break") == "line break"
+
+
+def test_medline_bibtex_authors_are_surname_comma_initials():
+    fields = {"PMID": ["1"], "AU": ["Smith J", "Doe AB", "Van Der Berg JJ"], "TI": ["T"]}
+    bib = converters.medline_to_bib(fields)
+    assert "author  = { Smith, J and Doe, AB and Van Der Berg, JJ }" in bib
+
+
+def test_medline_bibtex_leaves_collective_names_alone():
+    bib = converters.medline_to_bib({"PMID": ["1"], "AU": ["World Health Organization"], "TI": ["T"]})
+    assert "author  = { World Health Organization }" in bib
