@@ -70,6 +70,15 @@ class ConsistencyCheckerTests(unittest.TestCase):
         }
         self.assertTrue(CHECKER.check_numeric_precision(sources))
 
+    def test_millimolar_is_not_a_length(self) -> None:
+        self.assertEqual([], [m.group(0) for m in CHECKER.LENGTH_PATTERN.finditer("Add 10 mM NaCl.")])
+        sources = {Path("a.md"): "Add 10 mM NaCl.", Path("b.md"): "Scale bar 1 cm."}
+        self.assertEqual([], CHECKER.check_equivalent_length_units(sources))
+
+    def test_real_equivalent_lengths_are_still_reported(self) -> None:
+        sources = {Path("a.md"): "The scale bar is 10 mm.", Path("b.md"): "The scale bar is 1 cm."}
+        self.assertTrue(CHECKER.check_equivalent_length_units(sources))
+
 
 if __name__ == "__main__":
     unittest.main()
