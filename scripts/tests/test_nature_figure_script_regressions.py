@@ -53,5 +53,20 @@ class ValidateFigureWidthTests(unittest.TestCase):
         self.assertEqual(self.module.candidate_widths_mm("width_mm <- 183", "r"), [183.0])
 
 
+class BackendConfigTests(unittest.TestCase):
+    def test_non_string_backend_is_treated_as_unset(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            config = Path(tmp) / "config.json"
+            config.write_text(json.dumps({"backend": ["r"]}), encoding="utf-8")
+            result = subprocess.run(
+                [sys.executable, str(SCRIPTS / "nature_figure_backend.py"), "get"],
+                capture_output=True,
+                text=True,
+                env={**os.environ, "NATURE_FIGURE_CONFIG": str(config)},
+            )
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+
+
 if __name__ == "__main__":
     unittest.main()
