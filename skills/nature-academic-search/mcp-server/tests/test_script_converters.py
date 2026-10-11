@@ -31,3 +31,12 @@ def test_format_converter_imports_urlopen_for_real_downloads():
     with patch.object(format_converter, "urlopen", return_value=response) as opened:
         assert format_converter.efetch_medline("1") == "PMID- 1\n"
     opened.assert_called_once()
+
+
+def test_ris_escape_keeps_comparison_operators():
+    assert converters.ris_escape("Effect at p<0.05 and p>0.01") == "Effect at p<0.05 and p>0.01"
+
+
+def test_ris_escape_still_strips_markup():
+    assert converters.ris_escape("Role of <i>E. coli</i> in <b>disease</b>") == "Role of E. coli in disease"
+    assert converters.ris_escape("line<br/>break") == "line break"

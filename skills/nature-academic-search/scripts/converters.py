@@ -11,7 +11,8 @@ import re
 
 def ris_escape(text):
     """Strip HTML tags and normalize whitespace for safe RIS field output."""
-    text = re.sub(r"<[^>]+>", " ", text or "")
+    # Strip real tags only; "p<0.05 ... p>0.01" must not be read as one tag.
+    text = re.sub(r"</?[A-Za-z][A-Za-z0-9]*(?:\s[^<>]*)?/?>", " ", text or "")
     text = re.sub(r"\s+", " ", text)
     return text.strip()
 
