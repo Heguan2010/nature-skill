@@ -68,5 +68,19 @@ class BackendConfigTests(unittest.TestCase):
         self.assertNotIn("Traceback", result.stderr)
 
 
+class PanelAlignmentInputTests(unittest.TestCase):
+    def test_non_object_layout_is_not_auditable(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            layout = Path(tmp) / "layout.json"
+            layout.write_text("[]", encoding="utf-8")
+            result = subprocess.run(
+                [sys.executable, str(SCRIPTS / "audit_panel_alignment.py"), str(layout)],
+                capture_output=True,
+                text=True,
+            )
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+
+
 if __name__ == "__main__":
     unittest.main()
