@@ -38,3 +38,12 @@ def test_get_citation_tool_reports_an_error_for_an_unknown_doi(mock_crossref):
     payload = json.loads(academic_search_server.get_citation("10.9999/nope", id_type="doi"))
     assert "citation" not in payload
     assert "error" in json.dumps(payload).lower()
+
+
+def test_basic_citation_uses_nd_when_year_is_none():
+    import academic_search_server
+
+    paper = {"authors": ["Smith J"], "title": "T", "year": None, "journal": None, "doi": None, "pmid": "123"}
+    for style in ("apa", "vancouver", "ieee", "nature"):
+        citation = academic_search_server._format_basic_citation(paper, style)
+        assert "None" not in citation, (style, citation)
