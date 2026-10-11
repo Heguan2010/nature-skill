@@ -49,11 +49,26 @@ def copy_input(src, input_dir):
     return dest
 
 
+def flatten_to_rgb(image):
+    """Convert to RGB, compositing any transparency onto white.
+
+    A bare convert("RGB") drops the alpha channel and exposes whatever colour is
+    stored under transparent pixels, which is usually black.
+    """
+    has_alpha = "A" in image.getbands() or image.mode == "P" and "transparency" in image.info
+    if not has_alpha:
+        return image.convert("RGB")
+    rgba = image.convert("RGBA")
+    background = Image.new("RGB", rgba.size, (255, 255, 255))
+    background.paste(rgba, mask=rgba.getchannel("A"))
+    return background
+
+
 def save_image_page(src, page_dir):
     page_dir.mkdir(parents=True, exist_ok=True)
     out = page_dir / "source.png"
     with Image.open(src) as image:
-        image.convert("RGB").save(out)
+        flatten_to_rgb(image).save(out)
     return out
 
 
@@ -228,7 +243,7 @@ def extract_image_based_pptx_pages(pptx_path, pages_dir):
             page_dir.mkdir(parents=True, exist_ok=True)
             out = page_dir / "source.png"
             with Image.open(io.BytesIO(z.read(image_part))) as image:
-                image.convert("RGB").save(out)
+                flatten_to_rgb(image).save(out)
             outputs.append(out)
     return outputs
 
