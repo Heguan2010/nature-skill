@@ -31,6 +31,7 @@ import argparse
 import defusedxml.ElementTree as ET
 import requests
 from urllib.parse import urlencode, urlparse
+from urllib.request import urlopen
 
 from converters import (
     convert_from_medline,
