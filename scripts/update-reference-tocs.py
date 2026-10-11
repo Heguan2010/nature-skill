@@ -39,7 +39,13 @@ def add_contents(path: Path) -> bool:
     if len(lines) <= MIN_LINES or any(CONTENTS_RE.match(line) for line in lines[:40]):
         return False
 
-    headings = [match.group(1) for line in lines if (match := H2_RE.match(line))]
+    headings: list[str] = []
+    in_fence = False
+    for line in lines:
+        if line.lstrip().startswith(("```", "~~~")):
+            in_fence = not in_fence
+        elif not in_fence and (match := H2_RE.match(line)):
+            headings.append(match.group(1))
     if not headings:
         return False
 

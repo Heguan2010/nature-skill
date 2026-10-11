@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -27,6 +28,20 @@ class GithubAnchorTests(unittest.TestCase):
 
     def test_code_and_links_are_cleaned_first(self) -> None:
         self.assertEqual(TOCS.github_anchor("Use `x` and [docs](http://a.b)", {}), "use-x-and-docs")
+
+
+class FencedHeadingTests(unittest.TestCase):
+    def test_hash_lines_inside_code_fences_are_not_headings(self) -> None:
+        body = "\n".join(f"line {i}" for i in range(110))
+        text = "# Title\n\n## Real\n\n```bash\n## install\n```\n\n" + body + "\n\n## Also real\n"
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "reference.md"
+            path.write_text(text, encoding="utf-8")
+            self.assertTrue(TOCS.add_contents(path))
+            out = path.read_text(encoding="utf-8")
+        self.assertIn("[Real](#real)", out)
+        self.assertIn("[Also real](#also-real)", out)
+        self.assertNotIn("[install]", out)
 
 
 if __name__ == "__main__":
