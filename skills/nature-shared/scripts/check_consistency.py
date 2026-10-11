@@ -109,7 +109,7 @@ def check_term_groups(
     return findings
 
 
-NUMBER_PATTERN = re.compile(r"(?<![\w.])([+-]?(?:\d+\.\d+|\d+))(?![\w.])")
+NUMBER_PATTERN = re.compile(r"(?<![\w.])([+-]?(?:\d+\.\d+|\d+))(?!\w|\.\d)")
 
 
 def decimal_places(token: str) -> int:

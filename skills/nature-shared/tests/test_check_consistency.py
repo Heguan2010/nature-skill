@@ -58,6 +58,18 @@ class ConsistencyCheckerTests(unittest.TestCase):
         )
         self.assertIn("TERM_VARIANTS_PRESENT", {item.code for item in findings})
 
+    def test_number_at_end_of_sentence_is_matched(self) -> None:
+        self.assertEqual(["0.05"], CHECKER.NUMBER_PATTERN.findall("The effect was 0.05."))
+        self.assertEqual(["0.05", "12"], CHECKER.NUMBER_PATTERN.findall("p = 0.05, n = 12."))
+        self.assertEqual([], CHECKER.NUMBER_PATTERN.findall("See version 1.2.3 for details"))
+
+    def test_precision_variants_are_found_when_a_number_ends_a_sentence(self) -> None:
+        sources = {
+            Path("a.md"): "The effect was 0.05.",
+            Path("b.md"): "The effect was 0.050 (Table 1).",
+        }
+        self.assertTrue(CHECKER.check_numeric_precision(sources))
+
 
 if __name__ == "__main__":
     unittest.main()
