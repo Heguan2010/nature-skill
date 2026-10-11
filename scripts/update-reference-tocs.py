@@ -24,8 +24,10 @@ def clean_heading(text: str) -> str:
 
 def github_anchor(text: str, seen: dict[str, int]) -> str:
     slug = clean_heading(text).casefold()
+    # GitHub drops punctuation and turns each space into a hyphen without collapsing runs,
+    # so "Input - Output" is "input---output" and "A & B" is "a--b".
     slug = re.sub(r"[^\w\s-]", "", slug, flags=re.UNICODE)
-    slug = re.sub(r"[\s-]+", "-", slug).strip("-") or "section"
+    slug = re.sub(r"\s", "-", slug) or "section"
     duplicate = seen.get(slug, 0)
     seen[slug] = duplicate + 1
     return slug if duplicate == 0 else f"{slug}-{duplicate}"
