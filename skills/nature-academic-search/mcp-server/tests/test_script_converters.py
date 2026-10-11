@@ -51,3 +51,22 @@ def test_medline_bibtex_authors_are_surname_comma_initials():
 def test_medline_bibtex_leaves_collective_names_alone():
     bib = converters.medline_to_bib({"PMID": ["1"], "AU": ["World Health Organization"], "TI": ["T"]})
     assert "author  = { World Health Organization }" in bib
+
+
+def test_zero_retries_still_makes_one_attempt(tmp_path):
+    import json
+
+    payload = {"message": {"title": ["A Title"], "author": [{"family": "Smith", "given": "J"}], "issued": {"date-parts": [[2020]]}}}
+    response = MagicMock()
+    response.__enter__.return_value.read.return_value = json.dumps(payload).encode()
+    with patch.object(format_converter, "urlopen", return_value=response), patch.object(format_converter, "DELAY", 0):
+        ok, name = format_converter.download_crossref("10.1/x", str(tmp_path), "ris", retries=0)
+    assert ok, name
+    assert (tmp_path / name).exists()
+
+
+def test_zero_retries_reports_failure_instead_of_crashing(tmp_path):
+    with patch.object(format_converter, "urlopen", side_effect=OSError("boom")), patch.object(format_converter, "DELAY", 0):
+        ok, message = format_converter.download_crossref("10.1/x", str(tmp_path), "ris", retries=0)
+    assert not ok
+    assert "boom" in message
