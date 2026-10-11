@@ -37,5 +37,21 @@ class PlotTemplatePathTests(unittest.TestCase):
         )
 
 
+class ValidateFigureWidthTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.module = load_module("validate_figure_regression", "validate_figure.py")
+
+    def test_figsize_in_millimetres_is_not_scaled_again(self) -> None:
+        widths = self.module.candidate_widths_mm("plt.subplots(figsize=(183 / 25.4, 120 / 25.4))", "python")
+        self.assertEqual(widths, [183.0])
+
+    def test_figsize_in_inches_is_converted(self) -> None:
+        widths = self.module.candidate_widths_mm("figsize=(3.5, 2)", "python")
+        self.assertAlmostEqual(widths[0], 88.9)
+
+    def test_r_arrow_assignment_is_detected(self) -> None:
+        self.assertEqual(self.module.candidate_widths_mm("width_mm <- 183", "r"), [183.0])
+
+
 if __name__ == "__main__":
     unittest.main()
